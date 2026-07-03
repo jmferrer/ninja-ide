@@ -14,19 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with NINJA-IDE; If not, see <http://www.gnu.org/licenses/>.
+import importlib
+import importlib.util
 import os
-import imp
 from ninja_ide import resources
 
 
 class ExtensionRegistry(type):
-
     extensions = []
 
     def __new__(cls, classname, bases, attrs):
         klass = super().__new__(cls, classname, bases, attrs)
-        if classname != 'Extension':
-            extension_name = attrs.get('name', attrs['__module__'])
+        if classname != "Extension":
+            extension_name = attrs.get("name", attrs["__module__"])
             klass.name = extension_name
             cls.extensions.append(klass)
         return klass
@@ -73,12 +73,14 @@ class Extension(metaclass=ExtensionRegistry):
         """
 
 
-def discover_all(extensions_dir='.'):
-    extensions_dir = os.path.join(resources.PRJ_PATH,
-                                  "gui", "editor", "extensions")
+def discover_all(extensions_dir="."):
+    extensions_dir = os.path.join(resources.PRJ_PATH, "gui", "editor", "extensions")
     for filename in os.listdir(extensions_dir):
         module_name, ext = os.path.splitext(filename)
-        if ext == '.py' and not filename.startswith('__'):
-            _file, path, descr = imp.find_module(module_name, [extensions_dir])
-            if _file:
-                imp.load_module(module_name, _file, path, descr)
+        if ext == ".py" and not filename.startswith("__"):
+            spec = importlib.util.spec_from_file_location(
+                module_name, os.path.join(extensions_dir, filename)
+            )
+            if spec:
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)

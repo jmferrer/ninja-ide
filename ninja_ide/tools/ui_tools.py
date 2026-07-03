@@ -83,15 +83,15 @@ from ninja_ide.tools import json_manager
 
 from ninja_ide.tools.logger import NinjaLogger
 
-logger = NinjaLogger('ninja_ide.tools.ui_tools')
+logger = NinjaLogger("ninja_ide.tools.ui_tools")
 
 
 ###############################################################################
 # ToolBar
 ###############################################################################
 
-class Tab(QObject):
 
+class Tab(QObject):
     def __init__(self, parent):
         QObject.__init__(self, parent)
         self._toolbar = parent
@@ -127,7 +127,6 @@ class Tab(QObject):
 
 
 class ToolBar(QWidget):
-
     currentChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
@@ -292,8 +291,8 @@ class ToolBar(QWidget):
                 max_label_width = _width
         icon_height = 0 if minimum else 32
         return QSize(
-            max(width, max_label_width + 4),
-            icon_height + spacing + fm.height())
+            max(width, max_label_width + 4), icon_height + spacing + fm.height()
+        )
 
     def _is_valid_index(self, index):
         return index >= 0 and index < len(self.__tabs)
@@ -309,8 +308,8 @@ class ToolBar(QWidget):
 # Fancy Tool Button
 ###############################################################################
 
-class FancyButton(QToolButton):
 
+class FancyButton(QToolButton):
     def __init__(self, text="", parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_Hover, True)
@@ -361,8 +360,8 @@ class FancyButton(QToolButton):
         icon_rect = QRect(0, 0, 22, 22)
         self.icon().paint(painter, icon_rect, Qt.AlignVCenter)
         painter.drawText(
-            rect.adjusted(0, 0, -3, 0),
-            Qt.AlignRight | Qt.AlignVCenter, self.text())
+            rect.adjusted(0, 0, -3, 0), Qt.AlignRight | Qt.AlignVCenter, self.text()
+        )
 
     def sizeHint(self):
         self.ensurePolished()
@@ -370,13 +369,13 @@ class FancyButton(QToolButton):
         s.setWidth(s.width() + 25)
         return s.expandedTo(QApplication.globalStrut())
 
+
 ###############################################################################
 # Cool Tool Button
 ###############################################################################
 
 
 class CoolToolButton(QToolButton):
-
     def __init__(self, action=None, parent=None):
         super().__init__(parent)
 
@@ -449,7 +448,8 @@ class CoolToolButton(QToolButton):
             margin = 5
             available_width = r.width() - margin
             ellided_project_name = fm.elidedText(
-                project_name, Qt.ElideMiddle, available_width)
+                project_name, Qt.ElideMiddle, available_width
+            )
             painter.drawText(r, text_flags, ellided_project_name)
         else:
             self.icon().paint(painter, icon_rect, Qt.AlignCenter)
@@ -466,19 +466,20 @@ class CoolToolButton(QToolButton):
 # Custom Table CheckableHeaderTable
 ###############################################################################
 
+
 class CheckableHeaderTable(QTableWidget):
-    """ QTableWidget subclassed with QCheckBox on Header to select all items """
+    """QTableWidget subclassed with QCheckBox on Header to select all items"""
 
     stateChanged = pyqtSignal(int, name="stateChanged")
 
     def __init__(self, parent=None, *args):
-        """ init CheckableHeaderTable and add custom widgets and connections """
+        """init CheckableHeaderTable and add custom widgets and connections"""
         super(QTableWidget, self).__init__(parent, *args)
         self.chkbox = QCheckBox(self.horizontalHeader())
         self.chkbox.stateChanged.connect(self.change_items_selection)
 
     def change_items_selection(self, state):
-        """ de/select all items iterating over all table rows at column 0 """
+        """de/select all items iterating over all table rows at column 0"""
         for i in range(self.rowCount()):
             item = self.item(i, 0)
             if item is not None:
@@ -499,8 +500,9 @@ def load_table(table, headers, data, checkFirstColumn=True):
             if index == 0 and checkFirstColumn:
                 item.setData(Qt.UserRole, row)
                 item.setCheckState(Qt.Unchecked)
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled |
-                              Qt.ItemIsUserCheckable)
+                item.setFlags(
+                    Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
+                )
             else:
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
@@ -510,15 +512,16 @@ def remove_get_selected_items(table, data):
     pos = rows - 1
     selected = []
     for i in range(rows):
-        if table.item(pos - i, 0) is not None and \
-                table.item(pos - i, 0).checkState() == Qt.Checked:
+        if (
+            table.item(pos - i, 0) is not None
+            and table.item(pos - i, 0).checkState() == Qt.Checked
+        ):
             selected.append(data.pop(pos - i))
             table.removeRow(pos - i)
     return selected
 
 
 class LoadingItem(QLabel):
-
     def __init__(self):
         super(LoadingItem, self).__init__()
 
@@ -527,8 +530,7 @@ class LoadingItem(QLabel):
             item = QTreeWidgetItem()
             item.setText(0, (self.tr('       LOADING: "%s"') % folder))
         else:
-            item = item_type(parent,
-                             (self.tr('       LOADING: "%s"') % folder), folder)
+            item = item_type(parent, (self.tr('       LOADING: "%s"') % folder), folder)
         tree.addTopLevelItem(item)
         tree.setItemWidget(item, 0, self)
         return item
@@ -538,8 +540,8 @@ class LoadingItem(QLabel):
 # Thread with Callback
 ###############################################################################
 
-class ThreadExecution(QThread):
 
+class ThreadExecution(QThread):
     executionFinished = pyqtSignal(object, name="executionFinished")
 
     def __init__(self, functionInit=None, args=None, kwargs=None):
@@ -560,7 +562,6 @@ class ThreadExecution(QThread):
 
 
 class ThreadProjectExplore(QThread):
-
     def __init__(self):
         super(ThreadProjectExplore, self).__init__()
         self.execute = lambda: None
@@ -586,15 +587,17 @@ class ThreadProjectExplore(QThread):
     def _thread_refresh_project(self):
         if self._extensions != settings.SUPPORTED_EXTENSIONS:
             folderStructure = file_manager.open_project_with_extensions(
-                self._folder_path, self._extensions)
+                self._folder_path, self._extensions
+            )
         else:
             try:
                 folderStructure = file_manager.open_project(self._folder_path)
             except NinjaIOException:
                 pass  # There is not much we can do at this point
 
-        if folderStructure and (folderStructure.get(self._folder_path,
-                                                    [None, None])[1] is not None):
+        if folderStructure and (
+            folderStructure.get(self._folder_path, [None, None])[1] is not None
+        ):
             folderStructure[self._folder_path][1].sort()
             values = (self._folder_path, self._item, folderStructure)
             self.emit(SIGNAL("folderDataRefreshed(PyQt_PyObject)"), values)
@@ -602,19 +605,24 @@ class ThreadProjectExplore(QThread):
     def _thread_open_project(self):
         try:
             project = json_manager.read_ninja_project(self._folder_path)
-            extensions = project.get('supported-extensions',
-                                     settings.SUPPORTED_EXTENSIONS)
+            extensions = project.get(
+                "supported-extensions", settings.SUPPORTED_EXTENSIONS
+            )
             if extensions != settings.SUPPORTED_EXTENSIONS:
                 structure = file_manager.open_project_with_extensions(
-                    self._folder_path, extensions)
+                    self._folder_path, extensions
+                )
             else:
                 structure = file_manager.open_project(self._folder_path)
 
-            self.emit(SIGNAL("folderDataAcquired(PyQt_PyObject)"),
-                      (self._folder_path, structure))
+            self.emit(
+                SIGNAL("folderDataAcquired(PyQt_PyObject)"),
+                (self._folder_path, structure),
+            )
         except BaseException:
-            self.emit(SIGNAL("folderDataAcquired(PyQt_PyObject)"),
-                      (self._folder_path, None))
+            self.emit(
+                SIGNAL("folderDataAcquired(PyQt_PyObject)"), (self._folder_path, None)
+            )
 
 
 ###############################################################################
@@ -623,7 +631,6 @@ class ThreadProjectExplore(QThread):
 
 
 class Overlay(QWidget):
-
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         palette = QPalette(self.palette())
@@ -639,26 +646,19 @@ class Overlay(QWidget):
         painter.setPen(QPen(Qt.NoPen))
 
         for i in range(6):
-            x_pos = self.width() / 2 + 30 * \
-                math.cos(2 * math.pi * i / 6.0) - 10
-            y_pos = self.height() / 2 + 30 * \
-                math.sin(2 * math.pi * i / 6.0) - 10
+            x_pos = self.width() / 2 + 30 * math.cos(2 * math.pi * i / 6.0) - 10
+            y_pos = self.height() / 2 + 30 * math.sin(2 * math.pi * i / 6.0) - 10
             if (self.counter / 5) % 6 == i:
-                linear_gradient = QLinearGradient(
-                    x_pos + 10, x_pos, y_pos + 10, y_pos)
+                linear_gradient = QLinearGradient(x_pos + 10, x_pos, y_pos + 10, y_pos)
                 linear_gradient.setColorAt(0, QColor(135, 206, 250))
                 linear_gradient.setColorAt(1, QColor(0, 0, 128))
                 painter.setBrush(QBrush(linear_gradient))
             else:
-                linear_gradient = QLinearGradient(
-                    x_pos - 10, x_pos, y_pos + 10, y_pos)
+                linear_gradient = QLinearGradient(x_pos - 10, x_pos, y_pos + 10, y_pos)
                 linear_gradient.setColorAt(0, QColor(105, 105, 105))
                 linear_gradient.setColorAt(1, QColor(0, 0, 0))
                 painter.setBrush(QBrush(linear_gradient))
-            painter.drawEllipse(
-                x_pos,
-                y_pos,
-                20, 20)
+            painter.drawEllipse(x_pos, y_pos, 20, 20)
 
         painter.end()
 
@@ -698,13 +698,13 @@ def print_file(fileName, printFunction):
     preview.setMinimumSize(width, height)
     preview.exec_()
 
+
 ###############################################################################
 # FADING ANIMATION
 ###############################################################################
 
 
 class FaderWidget(QWidget):
-
     def __init__(self, old_widget, new_widget):
         QWidget.__init__(self, new_widget)
         self.old_pixmap = QPixmap(new_widget.size())
@@ -734,43 +734,44 @@ class FaderWidget(QWidget):
 # Enhanced UI Widgets
 ###############################################################################
 
-class LineEditButton(QLineEdit):
 
+class LineEditButton(QLineEdit):
     buttonClicked = pyqtSignal()
 
     def __init__(self, icon, parent=None):
         super().__init__(parent)
         if isinstance(icon, str):
             icon = QIcon(icon)
-        self._button = QPushButton(icon, '', self)
+        self._button = QPushButton(icon, "", self)
         self._button.setCursor(Qt.ArrowCursor)
         self._button.clicked.connect(self.buttonClicked.emit)
         frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
         btn_size = self._button.sizeHint()
         self.setMinimumSize(
-            max(self.minimumSizeHint().width(),
-                btn_size.width() + frame_width * 2 + 2),
-            max(self.minimumSizeHint().height(),
-                btn_size.height() + frame_width * 2 + 2)
+            max(self.minimumSizeHint().width(), btn_size.width() + frame_width * 2 + 2),
+            max(
+                self.minimumSizeHint().height(), btn_size.height() + frame_width * 2 + 2
+            ),
         )
 
     def resizeEvent(self, event):
         btn_size = self._button.sizeHint()
         frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
-        self._button.move(self.rect().right() - frame_width - btn_size.width(),
-                          (self.rect().bottom() - btn_size.height() + 1) / 2)
+        self._button.move(
+            self.rect().right() - frame_width - btn_size.width(),
+            (self.rect().bottom() - btn_size.height() + 1) / 2,
+        )
         super().resizeEvent(event)
 
 
 class ComboBoxButton(object):
-
     def __init__(self, combo, operation, icon=None):
         hbox = QHBoxLayout(combo)
         hbox.setDirection(hbox.RightToLeft)
         combo.setLayout(hbox)
         hbox.addStretch()
         btnOperation = QPushButton(combo)
-        btnOperation.setObjectName('combo_button')
+        btnOperation.setObjectName("combo_button")
         if icon:
             btnOperation.setIcon(QIcon(icon))
             btnOperation.setIconSize(QSize(16, 16))
@@ -779,7 +780,6 @@ class ComboBoxButton(object):
 
 
 class LineEditCount(QObject):
-
     """Show summary results inside the line edit, for counting some property."""
 
     def __init__(self, lineEdit):
@@ -806,7 +806,6 @@ class LineEditCount(QObject):
 
 
 class LineEditTabCompleter(QLineEdit):
-
     def __init__(self, completer, type=QCompleter.PopupCompletion):
         QLineEdit.__init__(self)
         self.completer = completer
@@ -817,8 +816,7 @@ class LineEditTabCompleter(QLineEdit):
     def event(self, event):
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Tab):
             if self.completionType == QCompleter.InlineCompletion:
-                eventTab = QKeyEvent(QEvent.KeyPress,
-                                     Qt.Key_End, Qt.NoModifier)
+                eventTab = QKeyEvent(QEvent.KeyPress, Qt.Key_End, Qt.NoModifier)
                 super(LineEditTabCompleter, self).event(eventTab)
             else:
                 completion = self.completer.currentCompletion()
@@ -835,12 +833,15 @@ class LineEditTabCompleter(QLineEdit):
 
         if self.completionType == QCompleter.InlineCompletion:
             actionCompletion = QAction(
-                self.tr("Set completion type to: Popup Completion"), self)
+                self.tr("Set completion type to: Popup Completion"), self
+            )
         else:
             actionCompletion = QAction(
-                self.tr("Set completion type to: Inline Completion"), self)
-        self.connect(actionCompletion, SIGNAL("triggered()"),
-                     self.change_completion_type)
+                self.tr("Set completion type to: Inline Completion"), self
+            )
+        self.connect(
+            actionCompletion, SIGNAL("triggered()"), self.change_completion_type
+        )
         popup_menu.insertSeparator(popup_menu.actions()[0])
         popup_menu.insertAction(popup_menu.actions()[0], actionCompletion)
 
@@ -857,7 +858,7 @@ class LineEditTabCompleter(QLineEdit):
 
 
 class CustomDelegate(QItemDelegate):
-    """ Always adds uppercase text """
+    """Always adds uppercase text"""
 
     def __init__(self, parent=None):
         QItemDelegate.__init__(self, parent)
@@ -872,7 +873,6 @@ class CustomDelegate(QItemDelegate):
 
 
 class ClickeableLabel(QLabel):
-
     clicked = pyqtSignal()
 
     def mousePressEvent(self, event):
@@ -900,22 +900,22 @@ def install_shortcuts(obj, actions, ide):
                     continue
                 shortcut = QShortcut(short(short_key), ide)
             shortcut.setContext(Qt.ApplicationShortcut)
-            if isinstance(func, collections.Callable):
+            if isinstance(func, collections.abc.Callable):
                 shortcut.activated.connect(func)
         if action_data:
-            is_menu = action_data.get('is_menu', False)
+            is_menu = action_data.get("is_menu", False)
             if is_menu:
-                item_ui = QMenu(action_data['text'], ide)
+                item_ui = QMenu(action_data["text"], ide)
             else:
-                item_ui = QAction(action_data['text'], ide)
+                item_ui = QAction(action_data["text"], ide)
                 object_name = "%s.%s" % (obj.__class__.__name__, connect)
                 item_ui.setObjectName(object_name)
                 # FIXME: Configurable
                 item_ui.setIconVisibleInMenu(False)
-            image_name = action_data.get('image', None)
-            section = action_data.get('section', None)
-            weight = action_data.get('weight', None)
-            keysequence = action_data.get('keysequence', None)
+            image_name = action_data.get("image", None)
+            section = action_data.get("section", None)
+            weight = action_data.get("weight", None)
+            keysequence = action_data.get("keysequence", None)
             if image_name:
                 if isinstance(image_name, int):
                     icon = ide.style().standardIcon(image_name)
@@ -933,12 +933,13 @@ def install_shortcuts(obj, actions, ide):
                 item_ui.setShortcut(short(short_key))
                 # Add tooltip with append shortcut
                 item_ui.setToolTip(
-                    tooltip_with_shortcut(item_ui.text(), short(short_key)))
+                    tooltip_with_shortcut(item_ui.text(), short(short_key))
+                )
                 item_ui.setShortcutContext(Qt.ApplicationShortcut)
             elif keysequence and not is_menu:
                 item_ui.setShortcut(short(keysequence))
                 item_ui.setShortcutContext(Qt.ApplicationShortcut)
-            if isinstance(func, collections.Callable) and not is_menu:
+            if isinstance(func, collections.abc.Callable) and not is_menu:
                 item_ui.triggered.connect(lambda _, func=func: func())
             if section and section[0] is not None and weight:
                 ide.register_menuitem(item_ui, section, weight)
@@ -955,9 +956,8 @@ def tooltip_with_shortcut(tip: str, shortcut) -> str:
 
 
 def get_qml_resource(qmlpath):
-    path_qml = QDir.fromNativeSeparators(
-        os.path.join(resources.QML_FILES, qmlpath))
-    path_qml = urlunparse(urlparse(path_qml)._replace(scheme='file'))
+    path_qml = QDir.fromNativeSeparators(os.path.join(resources.QML_FILES, qmlpath))
+    path_qml = urlunparse(urlparse(path_qml)._replace(scheme="file"))
     return QUrl(path_qml)
 
 
@@ -966,9 +966,7 @@ def draw_icon(icon, rect, painter, icon_mode, shadow=False):
     dip_offset = QPoint(1, -2)
 
     cache = QPixmap()
-    pixname = "icon {0} {1} {2}".format(
-        icon.cacheKey(), icon_mode, rect.height()
-    )
+    pixname = "icon {0} {1} {2}".format(icon.cacheKey(), icon_mode, rect.height())
     if QPixmapCache.find(pixname) is None:
         pix = icon.pixmap(rect.size())
         device_pixel_ratio = pix.devicePixelRatio()
@@ -986,20 +984,20 @@ def draw_icon(icon, rect, painter, icon_mode, shadow=False):
                 for x in range(0, im.width()):
                     pixel = scanline
                     intensity = qGray(pixel)
-                    scanline = qRgba(
-                        intensity, intensity, intensity, qAlpha(pixel))
+                    scanline = qRgba(intensity, intensity, intensity, qAlpha(pixel))
                     scanline += 1
             pix = QPixmap.fromImage(im)
 
         # Draw shadow
-        tmp = QImage(pix.size() + QSize(radius * 2, radius * 2),
-                     QImage.Format_ARGB32_Premultiplied)
+        tmp = QImage(
+            pix.size() + QSize(radius * 2, radius * 2),
+            QImage.Format_ARGB32_Premultiplied,
+        )
         tmp.fill(Qt.transparent)
 
         tmp_painter = QPainter(tmp)
         tmp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-        tmp_painter.drawPixmap(
-            QRect(radius, radius, pix.width(), pix.height()), pix)
+        tmp_painter.drawPixmap(QRect(radius, radius, pix.width(), pix.height()), pix)
         tmp_painter.end()
 
         # Blur the alpha channel
@@ -1019,11 +1017,13 @@ def draw_icon(icon, rect, painter, icon_mode, shadow=False):
 
         # Draw the blurred drop shadow
         cache_painter.drawImage(
-            QRect(0, 0, cache.rect().width(), cache.rect().height()), tmp)
+            QRect(0, 0, cache.rect().width(), cache.rect().height()), tmp
+        )
         # Draw the actual pixmap
         cache_painter.drawPixmap(
-            QRect(QPoint(radius, radius) + offset,
-                  QSize(pix.width(), pix.height())), pix)
+            QRect(QPoint(radius, radius) + offset, QSize(pix.width(), pix.height())),
+            pix,
+        )
         cache_painter.end()
         cache.setDevicePixelRatio(device_pixel_ratio)
         QPixmapCache.insert(pixname, cache)
@@ -1047,14 +1047,13 @@ def colored_icon(name, color):
 def get_icon(name, color=None):
     if color is None:
         # Normal icon
-        return QIcon(':img/%s' % name)
-    if not name.startswith(':img'):
-        name = ':img/%s' % name
+        return QIcon(":img/%s" % name)
+    if not name.startswith(":img"):
+        name = ":img/%s" % name
     return colored_icon(name, color)
 
 
 class TabShortcuts(QShortcut):
-
     def __init__(self, key, parent, index):
         super(TabShortcuts, self).__init__(key, parent)
         self.index = index

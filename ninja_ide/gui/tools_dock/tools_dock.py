@@ -51,7 +51,6 @@ DEBUG = logger.debug
 
 
 class _ToolsDock(QWidget):
-
     __WIDGETS = {}
     __created = False
     __index = 0
@@ -125,13 +124,11 @@ class _ToolsDock(QWidget):
             # Shortcut action
             ksequence = self._get_shortcut(shortcut_number)
             short = QShortcut(ksequence, ninjaide)
-            button.setToolTip(
-                ui_tools.tooltip_with_shortcut(button._text, ksequence))
+            button.setToolTip(ui_tools.tooltip_with_shortcut(button._text, ksequence))
             short.activated.connect(self._shortcut_triggered)
             shortcut_number += 1
 
-        self.buttons_widget.layout().addItem(
-            QSpacerItem(0, 0, QSizePolicy.Expanding))
+        self.buttons_widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding))
 
         # Python Selector
         btn_selector = ui_tools.FancyButton("Loading...")
@@ -144,11 +141,11 @@ class _ToolsDock(QWidget):
         self._python_selector = python_selector.PythonSelector(btn_selector)
 
         interpreter_srv = IDE.get_service("interpreter")
-        interpreter_srv.foundInterpreters.connect(
-            self._python_selector.add_model)
+        interpreter_srv.foundInterpreters.connect(self._python_selector.add_model)
 
         btn_selector.toggled[bool].connect(
-            lambda v: self._python_selector.setVisible(v))
+            lambda v: self._python_selector.setVisible(v)
+        )
 
         # Popup for show/hide tools widget
         button_toggle_widgets = ToggleButton()
@@ -228,7 +225,7 @@ class _ToolsDock(QWidget):
     def add_widget(self, display_name, obj):
         self._stack_widgets.addWidget(obj)
         func = getattr(obj, "install_widget", None)
-        if isinstance(func, collections.Callable):
+        if isinstance(func, collections.abc.Callable):
             func()
 
     def on_button_triggered(self):
@@ -288,7 +285,6 @@ class _ToolsDock(QWidget):
 
 
 class ToggleButton(QToolButton):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("toggle_button")
@@ -314,7 +310,6 @@ class ToggleButton(QToolButton):
 
 
 class StackedWidget(QStackedWidget):
-
     """Handle the different widgets in the stack of tools dock."""
 
     def setCurrentIndex(self, index):
@@ -322,13 +317,13 @@ class StackedWidget(QStackedWidget):
         old_widget = self.currentWidget()
         new_widget = self.widget(index)
         if old_widget != new_widget:
-            self.fader_widget = ui_tools.FaderWidget(self.currentWidget(),
-                                                     self.widget(index))
+            self.fader_widget = ui_tools.FaderWidget(
+                self.currentWidget(), self.widget(index)
+            )
         QStackedWidget.setCurrentIndex(self, index)
 
 
 class ToolButton(QPushButton):
-
     def __init__(self, text, number=None, parent=None):
         super().__init__(parent)
         self.setObjectName("button_tooldock")
@@ -354,21 +349,16 @@ class ToolButton(QPushButton):
             painter.drawText(event.rect(), Qt.AlignCenter, self._text)
         else:
             fm = self.fontMetrics()
-            base_line = (self.height() - fm.height()) / 2 + fm.ascent()
+            base_line = (self.height() - fm.height()) // 2 + fm.ascent()
             number_width = fm.width(self._number)
 
             painter = QPainter(self)
             # Draw shortcut number
-            painter.drawText(
-                (15 - number_width) / 2,
-                base_line,
-                self._number
-            )
+            painter.drawText((15 - number_width) // 2, base_line, self._number)
             # Draw display name of tool button
             painter.drawText(
-                18,
-                base_line,
-                fm.elidedText(self._text, Qt.ElideRight, self.width()))
+                18, base_line, fm.elidedText(self._text, Qt.ElideRight, self.width())
+            )
 
     def sizeHint(self):
         self.ensurePolished()

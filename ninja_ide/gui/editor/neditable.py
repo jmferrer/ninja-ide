@@ -33,14 +33,15 @@ class NEditable(QObject):
     @fileClosing(PyQt_PyObject)
     @fileSaved(PyQt_PyObject)
     """
-    fileSaved = pyqtSignal('PyQt_PyObject')
-    fileLoaded = pyqtSignal(['PyQt_PyObject'], [str])
-    canBeRecovered = pyqtSignal('PyQt_PyObject')
-    fileRemoved = pyqtSignal('PyQt_PyObject')
-    fileChanged = pyqtSignal('PyQt_PyObject')
-    fileClosing = pyqtSignal('PyQt_PyObject')
-    askForSaveFileClosing = pyqtSignal('PyQt_PyObject')
-    checkersUpdated = pyqtSignal('PyQt_PyObject')
+
+    fileSaved = pyqtSignal("PyQt_PyObject")
+    fileLoaded = pyqtSignal(["PyQt_PyObject"], [str])
+    canBeRecovered = pyqtSignal("PyQt_PyObject")
+    fileRemoved = pyqtSignal("PyQt_PyObject")
+    fileChanged = pyqtSignal("PyQt_PyObject")
+    fileClosing = pyqtSignal("PyQt_PyObject")
+    askForSaveFileClosing = pyqtSignal("PyQt_PyObject")
+    checkersUpdated = pyqtSignal("PyQt_PyObject")
 
     def __init__(self, nfile=None):
         super(NEditable, self).__init__()
@@ -53,6 +54,7 @@ class NEditable(QObject):
         self.ignore_checkers = False
         # Hot exit and autosave feature
         from ninja_ide.core.file_handling import nswapfile
+
         self._swap_file = nswapfile.NSwapFile(self)
         # Checkers:
         self.registered_checkers = []
@@ -60,12 +62,9 @@ class NEditable(QObject):
 
         # Connect signals
         if self._nfile:
-            self._nfile.fileClosing['QString',
-                                    bool].connect(self._about_to_close_file)
-            self._nfile.fileChanged.connect(
-                lambda: self.fileChanged.emit(self))
-            self._nfile.fileRemoved.connect(
-                self._on_file_removed_from_disk)
+            self._nfile.fileClosing["QString", bool].connect(self._about_to_close_file)
+            self._nfile.fileChanged.connect(lambda: self.fileChanged.emit(self))
+            self._nfile.fileRemoved.connect(self._on_file_removed_from_disk)
 
     def _on_file_removed_from_disk(self):
         # FIXME: maybe we should ask for save, save as...
@@ -103,7 +102,7 @@ class NEditable(QObject):
         self.__editor = editor
         # If we have an editor, let's include the checkers:
         self.include_checkers(self.language())
-        content = ''
+        content = ""
         if not self._nfile.is_new_file:
             content = self._nfile.read()
             self._nfile.start_watching()
@@ -175,8 +174,7 @@ class NEditable(QObject):
 
     @property
     def sorted_checkers(self):
-        return sorted(self.registered_checkers,
-                      key=lambda x: x[2], reverse=True)
+        return sorted(self.registered_checkers, key=lambda x: x[2], reverse=True)
 
     @property
     def is_dirty(self):
@@ -202,10 +200,11 @@ class NEditable(QObject):
             self.__editor.document().setModified(False)
             self.fileSaved.emit(self)
 
-    def include_checkers(self, lang='python'):
+    def include_checkers(self, lang="python"):
         """Initialize the Checkers, should be refreshed on checkers change."""
-        self.registered_checkers = sorted(checkers.get_checkers_for(lang),
-                                          key=lambda x: x[2])
+        self.registered_checkers = sorted(
+            checkers.get_checkers_for(lang), key=lambda x: x[2]
+        )
         self._has_checkers = len(self.registered_checkers) > 0
         for i, values in enumerate(self.registered_checkers):
             Checker, color, priority = values
@@ -228,6 +227,6 @@ class NEditable(QObject):
     def update_checkers_display(self):
         for items in self.registered_checkers:
             checker, _, _ = items
-            func = getattr(checker, 'refresh_display', None)
-            if isinstance(func, collections.Callable):
+            func = getattr(checker, "refresh_display", None)
+            if isinstance(func, collections.abc.Callable):
                 func()

@@ -47,7 +47,7 @@ class CentralWidget(QWidget):
 
         self._add_functions = {
             "central": self._insert_widget_inside,
-            "lateral": self._insert_widget_base
+            "lateral": self._insert_widget_base,
         }
         self._items = {}
 
@@ -79,7 +79,7 @@ class CentralWidget(QWidget):
         # # Add to Main Layout
 
     def install(self):
-        ide = IDE.get_service('ide')
+        ide = IDE.get_service("ide")
         ui_tools.install_shortcuts(self, actions.ACTIONS_CENTRAL, ide)
 
         ide.goingDown.connect(self.save_configuration)
@@ -114,10 +114,10 @@ class CentralWidget(QWidget):
         return self.lateral_panel.isVisible()
 
     def hide_all(self):
-        """ Hide/Show all the containers except the editor """
+        """Hide/Show all the containers except the editor"""
 
-        toolbar = IDE.get_service('toolbar')
-        if (self.lateral_panel.isVisible() or toolbar.isVisible()):
+        toolbar = IDE.get_service("toolbar")
+        if self.lateral_panel.isVisible() or toolbar.isVisible():
             if self.lateral_panel:
                 self.lateral_panel.hide()
             if toolbar:
@@ -133,15 +133,15 @@ class CentralWidget(QWidget):
         # Rearrange widgets on Window
         qsettings = IDE.ninja_settings()
         # Lists of sizes as list of QVariant- heightList = [QVariant, QVariant]
-        height_size = qsettings.value(
-            "window/central/inside_splitter_size", None)
-        width_size = qsettings.value(
-            "window/central/base_splitter_size", None)
+        height_size = qsettings.value("window/central/inside_splitter_size", None)
+        width_size = qsettings.value("window/central/base_splitter_size", None)
         lateral_visible = qsettings.value(
-            "window/central/lateral_visible", True, type=bool)
+            "window/central/lateral_visible", True, type=bool
+        )
         if height_size is None:
-            self._splitter_inside.setSizes([(self.height() / 3) * 2,
-                                           self.height() / 3])
+            self._splitter_inside.setSizes(
+                [(self.height() // 3) * 2, self.height() // 3]
+            )
         else:
             self._splitter_inside.restoreState(height_size)
         if width_size is None:
@@ -177,12 +177,15 @@ class CentralWidget(QWidget):
         """Save the size of the splitters"""
 
         qsettings = IDE.ninja_settings()
-        qsettings.setValue("window/central/base_splitter_size",
-                           self._splitter_base.saveState())
-        qsettings.setValue("window/central/inside_splitter_size",
-                           self._splitter_inside.saveState())
-        qsettings.setValue("window/central/lateral_visible",
-                           self.lateral_panel.isVisible())
+        qsettings.setValue(
+            "window/central/base_splitter_size", self._splitter_base.saveState()
+        )
+        qsettings.setValue(
+            "window/central/inside_splitter_size", self._splitter_inside.saveState()
+        )
+        qsettings.setValue(
+            "window/central/lateral_visible", self.lateral_panel.isVisible()
+        )
 
     def get_paste(self):
         return self.lateral_panel.get_paste()
@@ -192,7 +195,6 @@ class CentralWidget(QWidget):
 
 
 class LateralPanel(QWidget):
-
     def __init__(self, parent=None):
         super(LateralPanel, self).__init__(parent)
         self.has_component = False

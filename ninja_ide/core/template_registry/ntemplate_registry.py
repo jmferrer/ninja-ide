@@ -22,15 +22,13 @@ from ninja_ide.gui.ide import IDE
 
 
 class ConflictingTypeForCategory(Exception):
-
     def __init__(self, project_type, category):
         self.__project_type = project_type
         self.__category = category
         super(ConflictingTypeForCategory, self).__init__()
 
     def __repr__(self):
-        return "%s already has a type %s" % (self.__project_type,
-                                             self.__category)
+        return "%s already has a type %s" % (self.__project_type, self.__category)
 
     def message(self):
         return repr(self)
@@ -50,14 +48,14 @@ class NTemplateRegistry(QObject):
     def register_project_type(self, project_type):
         if project_type.compound_name() in self.__project_types.keys():
             raise ConflictingTypeForCategory(
-                project_type.type_name,
-                project_type.category
+                project_type.type_name, project_type.category
             )
         else:
             self.__project_types[project_type.compound_name()] = project_type
             # This is here mostly for convenience
-            self.__types_by_category.setdefault(
-                project_type.category, []).append(project_type)
+            self.__types_by_category.setdefault(project_type.category, []).append(
+                project_type
+            )
 
     def list_project_types(self):
         return self.__project_types.keys()
@@ -89,8 +87,14 @@ class BaseProjectType(QObject):
     single_line_comment = {}
     description = "No Description"
 
-    def __init__(self, name, path, licence_text, licence_short_name="GPLv3",
-                 base_encoding="utf-8"):
+    def __init__(
+        self,
+        name,
+        path,
+        licence_text,
+        licence_short_name="GPLv3",
+        base_encoding="utf-8",
+    ):
         self.name = name
         self.path = path
         self.base_encoding = base_encoding
@@ -100,8 +104,7 @@ class BaseProjectType(QObject):
 
     @classmethod
     def compound_name(cls):
-        return NTemplateRegistry.create_compound_name(
-            cls.type_name, cls.category)
+        return NTemplateRegistry.create_compound_name(cls.type_name, cls.category)
 
     @classmethod
     def register(cls):
@@ -113,8 +116,7 @@ class BaseProjectType(QObject):
             tr.register_project_type(cls)
         except ConflictingTypeForCategory:
             pass
-        finally:
-            return tr.get_project_type(cls.compound_name())
+        return tr.get_project_type(cls.compound_name())
 
     def _create_path(self, path=None):
         path = path if path else self.path
@@ -133,14 +135,12 @@ class BaseProjectType(QObject):
     def wizard_pages(cls):
         """Return the pages to be displayed in the wizard."""
 
-        raise NotImplementedError("%s lacks wizard_pages" %
-                                  cls.__name__)
+        raise NotImplementedError("%s lacks wizard_pages" % cls.__name__)
 
     @classmethod
     def from_dict(cls, results):
         """Create an instance from this project type using the wizard result"""
-        raise NotImplementedError("%s lacks from_dict" %
-                                  cls.__name__)
+        raise NotImplementedError("%s lacks from_dict" % cls.__name__)
 
     def get_file_extension(self, filename):
         _, extension = os.path.splitext(filename)
@@ -152,10 +152,10 @@ class BaseProjectType(QObject):
         """
         ext = self.get_file_extension(filepath)
         if self.base_encoding and (ext in self.encoding_string):
-            fd.write(self.encoding_string[ext] % self.base_encoding + '\n')
+            fd.write(self.encoding_string[ext] % self.base_encoding + "\n")
         if self.licence_text and (ext in self.single_line_comment):
             for each_line in self.licence_text.splitlines():
-                fd.write(self.single_line_comment[ext] + each_line + '\n')
+                fd.write(self.single_line_comment[ext] + each_line + "\n")
 
     def _create_file(self, path, content):
         with open(path, "w") as writable:
@@ -166,8 +166,7 @@ class BaseProjectType(QObject):
         """
         Create set of folders and files required for this project bootstrap
         """
-        raise NotImplementedError("%s lacks create_layout" %
-                                  self.__class__.__name__)
+        raise NotImplementedError("%s lacks create_layout" % self.__class__.__name__)
 
     def update_layout(self):
         """

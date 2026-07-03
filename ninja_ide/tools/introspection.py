@@ -20,18 +20,14 @@ from ninja_ide.intellisensei.analyzer import model
 
 from ninja_ide.tools.logger import NinjaLogger
 
-logger_imports = NinjaLogger(
-    'ninja_ide.tools.introspection.obtaining_imports')
-logger_symbols = NinjaLogger(
-    'ninja_ide.tools.introspection.obtaining_symbols')
+logger_imports = NinjaLogger("ninja_ide.tools.introspection.obtaining_imports")
+logger_symbols = NinjaLogger("ninja_ide.tools.introspection.obtaining_symbols")
 
 _map_type = {
-    ast.Tuple: 'tuple',
-    ast.List: 'list',
-    ast.Str: 'str',
-    ast.Dict: 'dict',
-    ast.Num: 'int',
-    ast.Call: 'function()',
+    ast.Tuple: "tuple",
+    ast.List: "list",
+    ast.Dict: "dict",
+    ast.Call: "function()",
 }
 
 
@@ -51,10 +47,9 @@ def _parse_class(symbol, with_docstrings):
     attr = {}
     func = {}
     clazz = {}
-    name = symbol.name + '('
-    name += ', '.join([
-        model.expand_attribute(base) for base in symbol.bases])
-    name += ')'
+    name = symbol.name + "("
+    name += ", ".join([model.expand_attribute(base) for base in symbol.bases])
+    name += ")"
     for sym in symbol.body:
         if isinstance(sym, ast.Assign):
             result = _parse_assign(sym)
@@ -62,23 +57,23 @@ def _parse_class(symbol, with_docstrings):
             attr.update(result[1])
         elif isinstance(sym, ast.FunctionDef):
             result = _parse_function(sym, with_docstrings)
-            attr.update(result['attrs'])
+            attr.update(result["attrs"])
             if with_docstrings:
-                docstring.update(result['docstring'])
-            func[result['name']] = {
-                'lineno': result['lineno'],
-                'functions': result['functions']
+                docstring.update(result["docstring"])
+            func[result["name"]] = {
+                "lineno": result["lineno"],
+                "functions": result["functions"],
             }
         elif isinstance(sym, ast.ClassDef):
             result = _parse_class(sym, with_docstrings)
-            clazz[result['name']] = {
-                'lineno': result['lineno'],
-                'members': {
-                    'attributes': result['attributes'],
-                    'functions': result['functions']
-                }
+            clazz[result["name"]] = {
+                "lineno": result["lineno"],
+                "members": {
+                    "attributes": result["attributes"],
+                    "functions": result["functions"],
+                },
             }
-            docstring.update(result['docstring'])
+            docstring.update(result["docstring"])
     if with_docstrings:
         docstring[symbol.lineno] = ast.get_docstring(symbol, clean=True)
 
@@ -87,21 +82,21 @@ def _parse_class(symbol, with_docstrings):
         lineno += 1
 
     return {
-        'name': name,
-        'attributes': attr,
-        'functions': func,
-        'lineno': lineno,
-        'docstring': docstring,
-        'classes': clazz
+        "name": name,
+        "attributes": attr,
+        "functions": func,
+        "lineno": lineno,
+        "docstring": docstring,
+        "classes": clazz,
     }
 
 
 def _parse_function(symbol, with_docstrings):
     docstring = {}
     attrs = {}
-    func = {'functions': {}}
+    func = {"functions": {}}
 
-    func_name = symbol.name + '('
+    func_name = symbol.name + "("
     # We store the arguments to compare with default backwards
     defaults = []
     for value in symbol.args.defaults:
@@ -109,34 +104,47 @@ def _parse_function(symbol, with_docstrings):
         defaults.append(value)
     arguments = []
     for arg in reversed(symbol.args.args):
-        if not isinstance(arg, ast.Name) or arg.id == "self":
+        if not isinstance(arg, ast.arg) or arg.arg == "self":
             continue
-        argument = arg.id
+        argument = arg.arg
         if defaults:
             value = defaults.pop()
             arg_default = _map_type.get(value.__class__, None)
             if arg_default is None:
-                if isinstance(value, ast.Attribute):
+                if isinstance(value, ast.Constant):
+                    if isinstance(value.value, str):
+                        arg_default = "str"
+                    elif isinstance(value.value, (int, float)):
+                        arg_default = "int"
+                    elif isinstance(value.value, bytes):
+                        arg_default = "bytes"
+                    elif value.value is None:
+                        arg_default = "None"
+                    elif isinstance(value.value, bool):
+                        arg_default = "bool"
+                    else:
+                        arg_default = "object"
+                elif isinstance(value, ast.Attribute):
                     arg_default = model.expand_attribute(value)
                 elif isinstance(value, ast.Name):
                     arg_default = value.id
                 else:
-                    arg_default = 'object'
-            argument += '=' + arg_default
+                    arg_default = "object"
+            argument += "=" + arg_default
         arguments.append(argument)
-    func_name += ', '.join(reversed(arguments))
+    func_name += ", ".join(reversed(arguments))
 
     if symbol.args.vararg is not None:
-        if not func_name.endswith('('):
-            func_name += ', '
-        func_name += '*'
+        if not func_name.endswith("("):
+            func_name += ", "
+        func_name += "*"
         func_name += symbol.args.vararg.arg
     if symbol.args.kwarg is not None:
-        if not func_name.endswith('('):
-            func_name += ', '
-        func_name += '**'
+        if not func_name.endswith("("):
+            func_name += ", "
+        func_name += "**"
         func_name += symbol.args.kwarg.arg
-    func_name += ')'
+    func_name += ")"
 
     for sym in symbol.body:
         if isinstance(sym, ast.Assign):
@@ -145,10 +153,10 @@ def _parse_function(symbol, with_docstrings):
         elif isinstance(sym, ast.FunctionDef):
             result = _parse_function(sym, with_docstrings)
             if with_docstrings:
-                docstring.update(result['docstring'])
-            func['functions'][result['name']] = {
-                'lineno': result['lineno'],
-                'functions': result['functions']
+                docstring.update(result["docstring"])
+            func["functions"][result["name"]] = {
+                "lineno": result["lineno"],
+                "functions": result["functions"],
             }
 
     if with_docstrings:
@@ -158,12 +166,18 @@ def _parse_function(symbol, with_docstrings):
     for decorator in symbol.decorator_list:
         lineno += 1
 
-    return {'name': func_name, 'lineno': lineno,
-            'attrs': attrs, 'docstring': docstring, 'functions': func}
+    return {
+        "name": func_name,
+        "lineno": lineno,
+        "attrs": attrs,
+        "docstring": docstring,
+        "functions": func,
+    }
 
 
-def obtain_symbols(source, with_docstrings=False, filename='',
-                   simple=False, only_simple=False):
+def obtain_symbols(
+    source, with_docstrings=False, filename="", simple=False, only_simple=False
+):
     """Parse a module source code to obtain: Classes, Functions and Assigns."""
 
     try:
@@ -190,33 +204,37 @@ def obtain_symbols(source, with_docstrings=False, filename='',
             if not only_simple:
                 result = _parse_function(symbol, with_docstrings)
                 if with_docstrings:
-                    docstrings.update(result['docstring'])
-                globalFunctions[result['name']] = {
-                    'lineno': result['lineno'],
-                    'functions': result['functions']}
+                    docstrings.update(result["docstring"])
+                globalFunctions[result["name"]] = {
+                    "lineno": result["lineno"],
+                    "functions": result["functions"],
+                }
             if simple:
                 result_simple = _parse_function_simplified(symbol)
                 symbols_simplified.update(result_simple)
         elif isinstance(symbol, ast.ClassDef):
             if not only_simple:
                 result = _parse_class(symbol, with_docstrings)
-                classes[result['name']] = {
-                    'lineno': result['lineno'],
-                    'members': {'attributes': result['attributes'],
-                                'functions': result['functions'],
-                                'classes': result['classes']}}
-                docstrings.update(result['docstring'])
+                classes[result["name"]] = {
+                    "lineno": result["lineno"],
+                    "members": {
+                        "attributes": result["attributes"],
+                        "functions": result["functions"],
+                        "classes": result["classes"],
+                    },
+                }
+                docstrings.update(result["docstring"])
             if simple:
                 result_simple = _parse_class_simplified(symbol)
                 symbols_simplified.update(result_simple)
     if globalAttributes:
-        symbols['attributes'] = globalAttributes
+        symbols["attributes"] = globalAttributes
     if globalFunctions:
-        symbols['functions'] = globalFunctions
+        symbols["functions"] = globalFunctions
     if classes:
-        symbols['classes'] = classes
+        symbols["classes"] = classes
     if docstrings and with_docstrings:
-        symbols['docstrings'] = docstrings
+        symbols["docstrings"] = docstrings
 
     if simple:
         return symbols, symbols_simplified
@@ -224,7 +242,7 @@ def obtain_symbols(source, with_docstrings=False, filename='',
         return symbols
 
 
-def obtain_imports(source='', body=None):
+def obtain_imports(source="", body=None):
     if source:
         try:
             module = ast.parse(source)
@@ -239,26 +257,22 @@ def obtain_imports(source='', body=None):
         for sym in body:
             if isinstance(sym, ast.Import):
                 for item in sym.names:
-                    imports[item.name] = {
-                        'asname': item.asname,
-                        'lineno': sym.lineno
-                    }
+                    imports[item.name] = {"asname": item.asname, "lineno": sym.lineno}
             if isinstance(sym, ast.ImportFrom):
                 for item in sym.names:
                     fromImports[item.name] = {
-                        'module': sym.module,
-                        'asname': item.asname,
-                        'lineno': sym.lineno
+                        "module": sym.module,
+                        "asname": item.asname,
+                        "lineno": sym.lineno,
                     }
-    return {'imports': imports, 'fromImports': fromImports}
+    return {"imports": imports, "fromImports": fromImports}
 
 
 def _parse_class_simplified(symbol):
     results = {}
-    name = symbol.name + '('
-    name += ', '.join([
-        model.expand_attribute(base) for base in symbol.bases])
-    name += ')'
+    name = symbol.name + "("
+    name += ", ".join([model.expand_attribute(base) for base in symbol.bases])
+    name += ")"
     for sym in symbol.body:
         if isinstance(sym, ast.FunctionDef):
             result = _parse_function_simplified(sym, symbol.name)
@@ -271,7 +285,7 @@ def _parse_class_simplified(symbol):
     for decorator in symbol.decorator_list:
         lineno += 1
 
-    results[lineno] = (name, 'c')
+    results[lineno] = (name, "c")
     return results
 
 
@@ -280,9 +294,9 @@ def _parse_function_simplified(symbol, member_of=""):
     inside_class = True if member_of != "" else False
 
     if member_of:
-        func_name = member_of + " : " + symbol.name + '('
+        func_name = member_of + " : " + symbol.name + "("
     else:
-        func_name = symbol.name + '('
+        func_name = symbol.name + "("
     # We store the arguments to compare with default backwards
     defaults = []
     for value in symbol.args.defaults:
@@ -290,33 +304,46 @@ def _parse_function_simplified(symbol, member_of=""):
         defaults.append(value)
     arguments = []
     for arg in reversed(symbol.args.args):
-        if not isinstance(arg, ast.Name) or arg.id == "self":
+        if not isinstance(arg, ast.arg) or arg.arg == "self":
             continue
-        argument = arg.id
+        argument = arg.arg
         if defaults:
             value = defaults.pop()
             arg_default = _map_type.get(value.__class__, None)
             if arg_default is None:
-                if isinstance(value, ast.Attribute):
+                if isinstance(value, ast.Constant):
+                    if isinstance(value.value, str):
+                        arg_default = "str"
+                    elif isinstance(value.value, (int, float)):
+                        arg_default = "int"
+                    elif isinstance(value.value, bytes):
+                        arg_default = "bytes"
+                    elif value.value is None:
+                        arg_default = "None"
+                    elif isinstance(value.value, bool):
+                        arg_default = "bool"
+                    else:
+                        arg_default = "object"
+                elif isinstance(value, ast.Attribute):
                     arg_default = model.expand_attribute(value)
                 elif isinstance(value, ast.Name):
                     arg_default = value.id
                 else:
-                    arg_default = 'object'
-            argument += '=' + arg_default
+                    arg_default = "object"
+            argument += "=" + arg_default
         arguments.append(argument)
-    func_name += ', '.join(reversed(arguments))
+    func_name += ", ".join(reversed(arguments))
     if symbol.args.vararg is not None:
-        if not func_name.endswith('('):
-            func_name += ', '
-        func_name += '*'
+        if not func_name.endswith("("):
+            func_name += ", "
+        func_name += "*"
         func_name += symbol.args.vararg.arg
     if symbol.args.kwarg is not None:
-        if not func_name.endswith('('):
-            func_name += ', '
-        func_name += '**'
+        if not func_name.endswith("("):
+            func_name += ", "
+        func_name += "**"
         func_name += symbol.args.kwarg.arg
-    func_name += ')'
+    func_name += ")"
 
     for sym in symbol.body:
         if isinstance(sym, ast.FunctionDef):
@@ -327,5 +354,5 @@ def _parse_function_simplified(symbol, member_of=""):
     for decorator in symbol.decorator_list:
         lineno += 1
 
-    results[lineno] = (func_name, 'f', inside_class)
+    results[lineno] = (func_name, "f", inside_class)
     return results

@@ -34,11 +34,9 @@ class TextCharFormat(QTextCharFormat):
 
 
 class Format(object):
-
     __slots__ = ("name", "tcf")
 
-    def __init__(self, name, color=None,
-                 bold=None, italic=None, base_format=None):
+    def __init__(self, name, color=None, bold=None, italic=None, base_format=None):
         self.name = name
         tcf = TextCharFormat()
         if base_format is not None:
@@ -95,8 +93,7 @@ class PartitionScanner(object):
             elif isinstance(p, dict):
                 p = Partition(**p)
             else:
-                assert isinstance(
-                    p, Partition), "Partition expected, got %r" % p
+                assert isinstance(p, Partition), "Partition expected, got %r" % p
             self.partitions.append(p)
             start_groups.append("(?P<g%s_%s>%s)" % (i, p.name, p.start))
         start_pat = "|".join(start_groups)
@@ -159,9 +156,21 @@ class Token(object):
 class Scanner(object):
     __slots__ = ("tokens", "search")
 
+    _FLAGS_RE = re.compile(r"\(\?([aiLmsux]+)\)")
+    _FLAG_MAP = {
+        "a": re.A,
+        "i": re.I,
+        "L": re.L,
+        "m": re.M,
+        "s": re.S,
+        "u": re.U,
+        "x": re.X,
+    }
+
     def __init__(self, tokens):
         self.tokens = []
         groups = []
+        flags = 0
         for t in tokens:
             if isinstance(t, (list, tuple)):
                 t = Token(*t)
@@ -173,12 +182,16 @@ class Scanner(object):
             if gdef in t.pattern:
                 p = t.pattern
             else:
-                p = ("(%s%s)" % (gdef, t.pattern))
+                p = "(%s%s)" % (gdef, t.pattern)
             p = t.prefix + p + t.suffix
+            for m in self._FLAGS_RE.finditer(p):
+                for ch in m.group(1):
+                    flags |= self._FLAG_MAP[ch]
+            p = self._FLAGS_RE.sub("", p)
             groups.append(p)
             self.tokens.append(t)
         pat = "|".join(groups)
-        self.search = re.compile(pat).search
+        self.search = re.compile(pat, flags).search
 
     def scan(self, s):
         search = self.search
@@ -195,9 +208,7 @@ class Scanner(object):
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
-
-    def __init__(self, parent, partition_scanner,
-                 scanner, formats, default_font=None):
+    def __init__(self, parent, partition_scanner, scanner, formats, default_font=None):
         """
         :param parent: QDocument or QTextEdit/QPlainTextEdit instance
         'partition_scanner:
@@ -218,10 +229,9 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         if isinstance(partition_scanner, (list, tuple)):
             partition_scanner = PartitionScanner(partition_scanner)
         else:
-            assert isinstance(
-                partition_scanner,
-                PartitionScanner), ("PartitionScanner expected, "
-                                    "got {!r}".format(partition_scanner))
+            assert isinstance(partition_scanner, PartitionScanner), (
+                "PartitionScanner expected, got {!r}".format(partition_scanner)
+            )
         self.partition_scanner = partition_scanner
 
         self.scanner = scanner
@@ -230,18 +240,16 @@ class SyntaxHighlighter(QSyntaxHighlighter):
                 inside_scanner = Scanner(inside_scanner)
                 self.scanner[inside_part] = inside_scanner
             else:
-                assert isinstance(
-                    inside_scanner, Scanner), ("Scanner expected, "
-                                               "got {!r}".format(
-                                                   inside_scanner))
+                assert isinstance(inside_scanner, Scanner), (
+                    "Scanner expected, got {!r}".format(inside_scanner)
+                )
 
         self.formats = {}
         for f in formats:
             if isinstance(f, tuple):
                 fname, f = f
             else:
-                assert isinstance(
-                    f, (Format, dict)), "Format expected, got %r" % f
+                assert isinstance(f, (Format, dict)), "Format expected, got %r" % f
             if isinstance(f, str):
                 f = (f,)  # only color specified
             if isinstance(f, (tuple, list)):
@@ -272,8 +280,9 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         set_format = self.setFormat
         get_scanner = self.get_scanner
 
-        for start, end, partition, new_state, is_inside in \
-                self.scan_partitions(previous_state, text):
+        for start, end, partition, new_state, is_inside in self.scan_partitions(
+            previous_state, text
+        ):
             f = get_format(partition, None)
             if f:
                 set_format(start, end - start, f)
@@ -283,8 +292,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
                     for token, token_pos, token_end in scan(text[start:end]):
                         f = get_format(token)
                         if f:
-                            set_format(
-                                start + token_pos, token_end - token_pos, f)
+                            set_format(start + token_pos, token_end - token_pos, f)
 
         self.setCurrentBlockState(new_state)
 

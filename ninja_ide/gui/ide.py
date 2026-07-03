@@ -54,7 +54,7 @@ from ninja_ide.tools import ui_tools
 
 from ninja_ide.tools.logger import NinjaLogger
 
-logger = NinjaLogger('ninja_ide.gui.ide')
+logger = NinjaLogger("ninja_ide.gui.ide")
 
 ###############################################################################
 # IDE: MAIN CONTAINER
@@ -71,9 +71,9 @@ class IDE(QMainWindow):
     can keep a better api without the need to tie the behaviour between
     the widgets, and let them just consume the 'actions' they need."""
 
-###############################################################################
-# SIGNALS
-###############################################################################
+    ###############################################################################
+    # SIGNALS
+    ###############################################################################
     goingDown = pyqtSignal()
     filesAndProjectsLoaded = pyqtSignal()
 
@@ -90,7 +90,7 @@ class IDE(QMainWindow):
 
     def __init__(self, start_server=False):
         QMainWindow.__init__(self)
-        self.setWindowTitle('NINJA-IDE {Ninja-IDE Is Not Just Another IDE}')
+        self.setWindowTitle("NINJA-IDE {Ninja-IDE Is Not Just Another IDE}")
         self.setMinimumSize(750, 500)
         QToolTip.setFont(QFont(settings.FONT.family(), 10))
         # Load the size and the position of the main window
@@ -145,52 +145,52 @@ class IDE(QMainWindow):
             {
                 "target": "main_container",
                 "signal_name": "fileSaved",
-                "slot": self.show_message
+                "slot": self.show_message,
             },
             {
                 "target": "main_container",
                 "signal_name": "currentEditorChanged",
-                "slot": self.change_window_title
+                "slot": self.change_window_title,
             },
             {
                 "target": "main_container",
                 "signal_name": "openPreferences",
-                "slot": self.show_preferences
+                "slot": self.show_preferences,
             },
             {
                 "target": "main_container",
                 "signal_name": "currentEditorChanged",
-                "slot": self._change_item_in_project
+                "slot": self._change_item_in_project,
             },
             {
                 "target": "main_container",
                 "signal_name": "allFilesClosed",
-                "slot": self.change_window_title
+                "slot": self.change_window_title,
             },
             {
                 "target": "projects_explorer",
                 "signal_name": "activeProjectChanged",
-                "slot": self.change_window_title
-            }
+                "slot": self.change_window_title,
+            },
         )
-        self.register_signals('ide', connections)
+        self.register_signals("ide", connections)
         #    {'target': 'main_container',
         #    {'target': 'main_container',
         #    {'target': 'explorer_container',
         #    {'target': 'explorer_container',
         # Central Widget MUST always exists
-        self.central = IDE.get_service('central_container')
+        self.central = IDE.get_service("central_container")
         self.setCentralWidget(self.central)
         # Install Services
         for service_name in self.__IDESERVICES:
             self.install_service(service_name)
         IDE.__created = True
         # Place Status Bar
-        main_container = IDE.get_service('main_container')
-        status_bar = IDE.get_service('status_bar')
+        main_container = IDE.get_service("main_container")
+        status_bar = IDE.get_service("status_bar")
         main_container.add_status_bar(status_bar)
         # Load Menu Bar
-        menu_bar = IDE.get_service('menu_bar')
+        menu_bar = IDE.get_service("menu_bar")
         if menu_bar:
             # These two are the same service, I think that's ok
             menu_bar.load_menu(self)
@@ -242,11 +242,11 @@ class IDE(QMainWindow):
             cls.__instance.install_service(service_name)
 
     def install_service(self, service_name):
-        """ Activate the registered service """
+        """Activate the registered service"""
 
         obj = IDE.__IDESERVICES.get(service_name, None)
-        func = getattr(obj, 'install', None)
-        if isinstance(func, collections.Callable):
+        func = getattr(obj, "install", None)
+        if isinstance(func, collections.abc.Callable):
             func()
         self._connect_signals()
 
@@ -276,26 +276,25 @@ class IDE(QMainWindow):
         for service_name in IDE.__IDECONNECTIONS:
             connections = IDE.__IDECONNECTIONS[service_name]
             for connection in connections:
-                if connection.get('connected', False):
+                if connection.get("connected", False):
                     continue
-                target = IDE.__IDESERVICES.get(
-                    connection['target'], None)
-                slot = connection['slot']
-                signal_name = connection['signal_name']
-                if target and isinstance(slot, collections.Callable):
+                target = IDE.__IDESERVICES.get(connection["target"], None)
+                slot = connection["slot"]
+                signal_name = connection["signal_name"]
+                if target and isinstance(slot, collections.abc.Callable):
                     # FIXME:
                     sl = getattr(target, signal_name, None)
 
                     if sl is not None:
                         sl.connect(slot)
-                        connection['connected'] = True
+                        connection["connected"] = True
 
                     # print("Falta conectar {} a {}".format(signal_name,
                     #                                      slot.__name__))
 
     @classmethod
     def register_shortcut(cls, shortcut_name, shortcut, action=None):
-        """ Register a shortcut and action """
+        """Register a shortcut and action"""
 
         cls.__IDESHORTCUTS[shortcut_name] = (shortcut, action)
 
@@ -351,8 +350,7 @@ class IDE(QMainWindow):
         editable = self.__neditables.get(nfile)
         if editable is None:
             editable = neditable.NEditable(nfile)
-            editable.fileClosing['PyQt_PyObject'].connect(
-                self._unload_neditable)
+            editable.fileClosing["PyQt_PyObject"].connect(self._unload_neditable)
             self.__neditables[nfile] = editable
         return editable
 
@@ -433,8 +431,10 @@ class IDE(QMainWindow):
         connection.close()
         if data:
             files, projects = str(data).split(ipc.project_delimiter, 1)
-            files = [(x.split(':')[0], int(x.split(':')[1]))
-                     for x in files.split(ipc.file_delimiter)]
+            files = [
+                (x.split(":")[0], int(x.split(":")[1]))
+                for x in files.split(ipc.file_delimiter)
+            ]
             projects = projects.split(ipc.project_delimiter)
             self.load_session_files_projects(files, [], projects, None)
 
@@ -483,11 +483,11 @@ class IDE(QMainWindow):
     def load_session_files_projects(self, files, projects, current_file):
         """Load the files and projects from previous session."""
         # Load projects
-        projects_explorer = IDE.get_service('projects_explorer')
+        projects_explorer = IDE.get_service("projects_explorer")
         if projects_explorer is not None:
             projects_explorer.load_session_projects(projects)
         # Load files
-        main_container = IDE.get_service('main_container')
+        main_container = IDE.get_service("main_container")
         for path, cursor_pos in files:
             line, col = cursor_pos
             main_container.open_file(path, line, col)
@@ -506,11 +506,11 @@ class IDE(QMainWindow):
     def __set_session(self, sessionName):
         self._session = sessionName
         if self._session is not None:
-            self.setWindowTitle(translations.TR_SESSION_IDE_HEADER %
-                                {'session': self._session})
-        else:
             self.setWindowTitle(
-                'NINJA-IDE {Ninja-IDE Is Not Just Another IDE}')
+                translations.TR_SESSION_IDE_HEADER % {"session": self._session}
+            )
+        else:
+            self.setWindowTitle("NINJA-IDE {Ninja-IDE Is Not Just Another IDE}")
 
     Session = property(__get_session, __set_session)
 
@@ -564,8 +564,7 @@ class IDE(QMainWindow):
 
     @classmethod
     def data_settings(cls):
-        qsettings = QSettings(
-            resources.DATA_SETTINGS_PATH, QSettings.IniFormat)
+        qsettings = QSettings(resources.DATA_SETTINGS_PATH, QSettings.IniFormat)
         return qsettings
 
     # @classmethod
@@ -609,17 +608,18 @@ class IDE(QMainWindow):
                     if nfile.is_new_file:
                         continue
                     editable = self.get_editable(nfile)
-                    files_info.append((
-                        nfile.file_path, editable.editor.cursor_position))
+                    files_info.append(
+                        (nfile.file_path, editable.editor.cursor_position)
+                    )
             data_settings.setValue("lastSession/openedFiles", files_info)
 
         main_container = self.get_service("main_container")
         neditor = main_container.get_current_editor()
         # Current opened file
-        current_file = ''
+        current_file = ""
         if neditor is not None:
             current_file = neditor.file_path
-        data_settings.setValue('lastSession/currentFile', current_file)
+        data_settings.setValue("lastSession/currentFile", current_file)
         # Save toolbar visibility
         # ninja_settings.setValue('window/hide_toolbar',
         #                         not self.toolbar.isVisible())

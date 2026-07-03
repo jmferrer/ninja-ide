@@ -18,7 +18,7 @@
 import time
 import abc
 from collections import namedtuple
-from collections import Callable
+from collections.abc import Callable
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QThread
@@ -33,7 +33,6 @@ CodeInfo = namedtuple("CodeInfo", "pservice source line col path")
 
 
 class IntelliSenseWorker(QThread):
-
     workerFailed = pyqtSignal(str)
 
     def __init__(self, parent):
@@ -58,7 +57,6 @@ class IntelliSenseWorker(QThread):
 
 
 class IntelliSense(QObject):
-
     resultAvailable = pyqtSignal("PyQt_PyObject")
 
     services = ("completions", "calltips")
@@ -84,13 +82,7 @@ class IntelliSense(QObject):
 
     def _code_info(self, editor, kind):
         line, col = editor.cursor_position
-        return CodeInfo(
-            kind,
-            editor.text,
-            line + 1,
-            col,
-            editor.file_path
-        )
+        return CodeInfo(kind, editor.text, line + 1, col, editor.file_path)
 
     def process(self, kind, neditor):
         """Handle request from IntelliSense Assistant"""
@@ -119,8 +111,11 @@ class IntelliSense(QObject):
     def provider_services(self, language):
         """Returns the services available for a provider"""
 
-        return [service for service in dir(self.provider(language))
-                if service in IntelliSense.services]
+        return [
+            service
+            for service in dir(self.provider(language))
+            if service in IntelliSense.services
+        ]
 
 
 class Provider(abc.ABC):
